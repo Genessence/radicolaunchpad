@@ -1,4 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { PageHeader } from '@/components/PageHeader';
+import { BrandBriefCard } from '@/components/BrandBriefCard';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   LineChart, Line, AreaChart, Area, PieChart, Pie, Cell,
@@ -37,10 +39,13 @@ const COLORS = ['hsl(220, 60%, 20%)', 'hsl(42, 75%, 55%)', 'hsl(199, 89%, 48%)',
 export default function Analytics() {
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Analytics</h1>
-        <p className="text-sm text-muted-foreground">Operational analytics and performance insights</p>
-      </div>
+      <PageHeader
+        title="Analytics"
+        description="Operational analytics and performance insights"
+        breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Analytics' }]}
+      />
+
+      <BrandBriefCard />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <Card>

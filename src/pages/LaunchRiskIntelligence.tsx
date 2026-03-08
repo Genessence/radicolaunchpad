@@ -2,6 +2,8 @@ import { useBrandLaunch } from '@/contexts/BrandLaunchContext';
 import { StatusBadge } from '@/components/StatusBadge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { KPICard } from '@/components/KPICard';
+import { PageHeader } from '@/components/PageHeader';
+import { BrandBriefCard } from '@/components/BrandBriefCard';
 import { AlertTriangle, IndianRupee, Clock, TrendingDown } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -22,19 +24,22 @@ const bottleneckData = [
 
 export default function LaunchRiskIntelligence() {
   const { state } = useBrandLaunch();
-  const alerts = state.riskAlerts.filter(r =>
-    state.selectedBrandId === 'all' || r.brandId === state.selectedBrandId
+  const alerts = state.riskAlerts.filter(
+    (r) => state.selectedBrandId === 'all' || r.brandId === state.selectedBrandId
   );
 
-  const activeAlerts = alerts.filter(r => r.status === 'active');
+  const activeAlerts = alerts.filter((r) => r.status === 'active');
   const totalImpact = activeAlerts.reduce((s, r) => s + r.projectedRevenueImpact, 0);
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Launch Risk Intelligence</h1>
-        <p className="text-sm text-muted-foreground">AI-driven risk monitoring and bottleneck analysis</p>
-      </div>
+      <PageHeader
+        title="Launch Risk Intelligence"
+        description="AI-driven risk monitoring and bottleneck analysis"
+        breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Launch Risk Intelligence' }]}
+      />
+
+      <BrandBriefCard />
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <KPICard title="Active Risks" value={activeAlerts.length} icon={AlertTriangle} highlight />

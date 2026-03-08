@@ -1,22 +1,64 @@
+import { Link } from 'react-router-dom';
 import { useBrandLaunch } from '@/contexts/BrandLaunchContext';
 import { StatusBadge } from '@/components/StatusBadge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Badge } from '@/components/ui/badge';
-import { Star } from 'lucide-react';
+import { PageHeader } from '@/components/PageHeader';
+import { BrandBriefCard } from '@/components/BrandBriefCard';
+import { Star, Send, ExternalLink } from 'lucide-react';
+
+const RD_STAGE_KEY = 'rd-blend' as const;
 
 export default function RDBlending() {
-  const { state } = useBrandLaunch();
-  const selectedBrand = state.selectedBrandId === 'all' ? 'b1' : state.selectedBrandId;
-  const trials = state.blendTrials.filter(t => state.selectedBrandId === 'all' || t.brandId === state.selectedBrandId);
-  const approvedTrial = trials.find(t => t.status === 'approved');
+  const { state, dispatch } = useBrandLaunch();
+  const trials = state.blendTrials.filter(
+    (t) => state.selectedBrandId === 'all' || t.brandId === state.selectedBrandId
+  );
+  const approvedTrial = trials.find((t) => t.status === 'approved');
+  const brand = state.selectedBrandId !== 'all'
+    ? state.brands.find((b) => b.id === state.selectedBrandId)
+    : state.brands[0];
+  const rdGate = brand?.stageGates.find((g) => g.key === RD_STAGE_KEY);
+  const canSubmitRd = rdGate?.status === 'in-progress' && rdGate.subTasks.every((t) => t.completed);
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">R&D / Blending</h1>
-        <p className="text-sm text-muted-foreground">Blend trial management and sensory tracking</p>
-      </div>
+      <PageHeader
+        title="R&D / Blending"
+        description="Blend trial management and sensory tracking"
+        breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'R&D / Blending' }]}
+      />
+
+      <BrandBriefCard />
+
+      {brand && rdGate && (
+        <Card className={rdGate.status === 'pending-approval' ? 'border-gold/50' : ''}>
+          <CardContent className="py-4 flex items-center justify-between">
+            <div>
+              <p className="font-medium">R&D / Blend Development Stage Gate</p>
+              <p className="text-sm text-muted-foreground">
+                {brand.name} · <StatusBadge status={rdGate.status} />
+                {rdGate.subTasks.some((t) => !t.completed) && (
+                  <span className="ml-2">
+                    {rdGate.subTasks.filter((t) => t.completed).length}/{rdGate.subTasks.length} sub-tasks complete
+                  </span>
+                )}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button asChild variant="outline" size="sm">
+                <Link to="/lifecycle" state={{ brandId: brand.id }}><ExternalLink className="h-3.5 w-3.5 mr-1" />View Lifecycle</Link>
+              </Button>
+              {canSubmitRd && (
+                <Button size="sm" onClick={() => dispatch({ type: 'SUBMIT_FOR_APPROVAL', brandId: brand.id, stageKey: RD_STAGE_KEY })}>
+                  <Send className="h-3.5 w-3.5 mr-1" />Submit for approval
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <Card className="lg:col-span-2">

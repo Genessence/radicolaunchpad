@@ -1,10 +1,13 @@
+import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Settings, Users, Shield } from 'lucide-react';
+import { PageHeader } from '@/components/PageHeader';
+import { useBrandLaunch } from '@/contexts/BrandLaunchContext';
+import { Settings, Users, ClipboardCheck } from 'lucide-react';
 
 const users = [
   { name: 'Arun Sharma', role: 'Brand Manager', email: 'arun@radico.com', status: 'Active' },
@@ -15,12 +18,31 @@ const users = [
 ];
 
 export default function Admin() {
+  const { getPendingApprovalBrands } = useBrandLaunch();
+  const pendingCount = getPendingApprovalBrands().length;
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Admin</h1>
-        <p className="text-sm text-muted-foreground">User management and system settings</p>
-      </div>
+      <PageHeader
+        title="Admin"
+        description="User management and system settings"
+        breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Admin' }]}
+        showBrandSelector={false}
+      />
+
+      {pendingCount > 0 && (
+        <Card className="border-gold/50 bg-gold/5">
+          <CardContent className="py-4 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <ClipboardCheck className="h-5 w-5 text-gold" />
+              <span className="font-medium">{pendingCount} stage gate(s) pending approval</span>
+            </div>
+            <Button asChild variant="outline" size="sm">
+              <Link to="/admin/approvals">Review Approval Queue</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <Card className="lg:col-span-2">

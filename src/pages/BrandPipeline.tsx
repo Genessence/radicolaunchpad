@@ -2,10 +2,12 @@ import { useBrandLaunch } from '@/contexts/BrandLaunchContext';
 import { calculateLaunchReadiness, LIFECYCLE_STAGES } from '@/data/mockData';
 import { StatusBadge } from '@/components/StatusBadge';
 import { Progress } from '@/components/ui/progress';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { PageHeader } from '@/components/PageHeader';
+import { BrandBriefCard } from '@/components/BrandBriefCard';
 import { Plus, Search, Filter } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -23,7 +25,11 @@ export default function BrandPipeline() {
   const [search, setSearch] = useState('');
   const [stageFilter, setStageFilter] = useState<string>('all');
 
-  const brands = state.brands.filter(b => {
+  const baseBrands = state.selectedBrandId === 'all'
+    ? state.brands
+    : state.brands.filter(b => b.id === state.selectedBrandId);
+
+  const brands = baseBrands.filter(b => {
     const matchSearch = b.name.toLowerCase().includes(search.toLowerCase());
     const matchStage = stageFilter === 'all' || b.currentStage === stageFilter;
     return matchSearch && matchStage;
@@ -31,17 +37,17 @@ export default function BrandPipeline() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Brand Pipeline</h1>
-          <p className="text-sm text-muted-foreground">{state.brands.length} brands in portfolio</p>
-        </div>
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button className="gap-2">
-              <Plus className="h-4 w-4" /> Create Brand
-            </Button>
-          </DialogTrigger>
+      <PageHeader
+        title="Brand Pipeline"
+        description={`${baseBrands.length} brands in portfolio`}
+        breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Brand Pipeline' }]}
+        actions={
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button className="gap-2">
+                <Plus className="h-4 w-4" /> Create Brand
+              </Button>
+            </DialogTrigger>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Create New Brand</DialogTitle>
@@ -66,7 +72,10 @@ export default function BrandPipeline() {
             </div>
           </DialogContent>
         </Dialog>
-      </div>
+        }
+      />
+
+      <BrandBriefCard />
 
       <div className="flex items-center gap-3">
         <div className="relative flex-1 max-w-sm">

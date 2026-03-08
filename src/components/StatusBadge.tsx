@@ -21,6 +21,7 @@ const statusConfig: Record<string, { bg: string; text: string; label: string }> 
   scheduled: { bg: 'bg-info/10', text: 'text-info', label: 'Scheduled' },
   rejected: { bg: 'bg-destructive/10', text: 'text-destructive', label: 'Rejected' },
   'pending-review': { bg: 'bg-warning/10', text: 'text-warning', label: 'Pending Review' },
+  'pending-approval': { bg: 'bg-gold/10', text: 'text-gold', label: 'Pending Approval' },
   active: { bg: 'bg-destructive/10', text: 'text-destructive', label: 'Active' },
   mitigated: { bg: 'bg-warning/10', text: 'text-warning', label: 'Mitigated' },
   resolved: { bg: 'bg-success/10', text: 'text-success', label: 'Resolved' },

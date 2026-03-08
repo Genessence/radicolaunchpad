@@ -3,12 +3,14 @@ import { KPICard } from '@/components/KPICard';
 import { StatusBadge } from '@/components/StatusBadge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { PageHeader } from '@/components/PageHeader';
+import { BrandBriefCard } from '@/components/BrandBriefCard';
 import { ShieldCheck, Clock, CheckCircle2, AlertTriangle } from 'lucide-react';
 
 export default function ComplianceTracker() {
   const { state, dispatch } = useBrandLaunch();
-  const compliance = state.stateCompliance.filter(c =>
-    state.selectedBrandId === 'all' || c.brandId === state.selectedBrandId
+  const compliance = state.stateCompliance.filter(
+    (c) => state.selectedBrandId === 'all' || c.brandId === state.selectedBrandId
   );
 
   const totalApproved = compliance.reduce((sum, c) => {
@@ -19,10 +21,13 @@ export default function ComplianceTracker() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Compliance Tracker</h1>
-        <p className="text-sm text-muted-foreground">State-by-state regulatory approval tracking</p>
-      </div>
+      <PageHeader
+        title="Compliance Tracker"
+        description="State-by-state regulatory approval tracking"
+        breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Compliance Tracker' }]}
+      />
+
+      <BrandBriefCard />
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <KPICard title="Compliance Score" value={`${complianceScore}%`} icon={ShieldCheck} highlight />

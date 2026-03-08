@@ -10,6 +10,147 @@ export type LifecycleStage =
   | 'distributor-allocation'
   | 'market-launch';
 
+/** 7-stage high-level model (Radico Khaitan / Global Alcohol Brand Launch Lifecycle) */
+export type StageGateKey =
+  | 'brand-approval'
+  | 'rd-blend'
+  | 'packaging'
+  | 'regulatory'
+  | 'manufacturing'
+  | 'marketing'
+  | 'launch';
+
+export type StageGateStatus = 'not-started' | 'in-progress' | 'pending-approval' | 'completed';
+
+export interface StageSubTask {
+  id: string;
+  label: string;
+  completed: boolean;
+}
+
+export interface StageGate {
+  key: StageGateKey;
+  label: string;
+  status: StageGateStatus;
+  owner: string;
+  plannedStart: string;
+  plannedEnd: string;
+  actualStart?: string;
+  actualEnd?: string;
+  budget?: number;
+  actualCost?: number;
+  subTasks: StageSubTask[];
+  adminApprovedAt?: string;
+  adminApprovedBy?: string;
+  rejectionComment?: string;
+}
+
+export const STAGE_GROUPS: Record<StageGateKey, LifecycleStage[]> = {
+  'brand-approval': ['ideation'],
+  'rd-blend': ['blend-development', 'sensory-approval'],
+  packaging: ['packaging'],
+  regulatory: ['label-registration', 'brand-registration', 'price-approval'],
+  manufacturing: ['production'],
+  marketing: [],
+  launch: ['distributor-allocation', 'market-launch'],
+};
+
+export const STAGE_GATE_CONFIG: Record<StageGateKey, { requiresApproval: boolean }> = {
+  'brand-approval': { requiresApproval: true },
+  'rd-blend': { requiresApproval: true },
+  packaging: { requiresApproval: true },
+  regulatory: { requiresApproval: true },
+  manufacturing: { requiresApproval: true },
+  marketing: { requiresApproval: true },
+  launch: { requiresApproval: true },
+};
+
+export const STAGE_SUB_TASKS: Record<StageGateKey, { id: string; label: string }[]> = {
+  'brand-approval': [
+    { id: 'ba1', label: 'Market research & concept definition' },
+    { id: 'ba2', label: 'Business planning' },
+    { id: 'ba3', label: 'Team & partners assembled' },
+  ],
+  'rd-blend': [
+    { id: 'rd1', label: 'Formulation & testing' },
+    { id: 'rd2', label: 'Stability/shelf-life testing' },
+    { id: 'rd3', label: 'Scale-up trials' },
+  ],
+  packaging: [
+    { id: 'pk1', label: 'Brand identity & trademark' },
+    { id: 'pk2', label: 'Bottle/label design' },
+    { id: 'pk3', label: 'Prototyping' },
+  ],
+  regulatory: [
+    { id: 'rg1', label: 'Permits & licenses' },
+    { id: 'rg2', label: 'Label & formula approval' },
+    { id: 'rg3', label: 'Trademark registration' },
+    { id: 'rg4', label: 'Compliance checks' },
+  ],
+  manufacturing: [
+    { id: 'mf1', label: 'Production scheduling' },
+    { id: 'mf2', label: 'Quality assurance' },
+    { id: 'mf3', label: 'Inventory & warehousing' },
+  ],
+  marketing: [
+    { id: 'mk1', label: 'Digital presence' },
+    { id: 'mk2', label: 'Promotions & sampling' },
+    { id: 'mk3', label: 'Advertising & PR' },
+    { id: 'mk4', label: 'Marketing compliance' },
+  ],
+  launch: [
+    { id: 'ln1', label: 'Distribution agreements' },
+    { id: 'ln2', label: 'Logistics' },
+    { id: 'ln3', label: 'Launch timing' },
+    { id: 'ln4', label: 'Sales support' },
+  ],
+};
+
+/** Default durations in days (for suggesting planned dates) */
+export const STAGE_DEFAULT_DURATIONS: Record<StageGateKey, { minDays: number; maxDays: number; hint: string }> = {
+  'brand-approval': { minDays: 30, maxDays: 90, hint: '1–3 months' },
+  'rd-blend': { minDays: 180, maxDays: 365, hint: '6–12 months' },
+  packaging: { minDays: 30, maxDays: 90, hint: '4–12 weeks design + months procurement' },
+  regulatory: { minDays: 90, maxDays: 180, hint: '3–6 months permits' },
+  manufacturing: { minDays: 60, maxDays: 180, hint: 'Several months' },
+  marketing: { minDays: 90, maxDays: 180, hint: '3–6 months pre-launch' },
+  launch: { minDays: 30, maxDays: 60, hint: '1–2 months' },
+};
+
+export const STAGE_GATE_LABELS: Record<StageGateKey, string> = {
+  'brand-approval': 'Brand Approval',
+  'rd-blend': 'R&D / Blend Development',
+  packaging: 'Packaging',
+  regulatory: 'Regulatory',
+  manufacturing: 'Manufacturing',
+  marketing: 'Marketing',
+  launch: 'Launch',
+};
+
+export function createDefaultStageGates(overrides?: Partial<Record<StageGateKey, Partial<StageGate>>>): StageGate[] {
+  const keys: StageGateKey[] = ['brand-approval', 'rd-blend', 'packaging', 'regulatory', 'manufacturing', 'marketing', 'launch'];
+  return keys.map((key, i) => {
+    const defaultTask: StageGate = {
+      key,
+      label: STAGE_GATE_LABELS[key],
+      status: 'not-started',
+      owner: '',
+      plannedStart: '',
+      plannedEnd: '',
+      subTasks: STAGE_SUB_TASKS[key].map((t) => ({ ...t, completed: false })),
+    };
+    return { ...defaultTask, ...overrides?.[key] };
+  });
+}
+
+export function getStageDelay(plannedEnd: string, actualEnd?: string): number | null {
+  if (!actualEnd || !plannedEnd) return null;
+  const planned = new Date(plannedEnd).getTime();
+  const actual = new Date(actualEnd).getTime();
+  const diffDays = Math.ceil((actual - planned) / (1000 * 60 * 60 * 24));
+  return diffDays > 0 ? diffDays : 0;
+}
+
 export const LIFECYCLE_STAGES: { key: LifecycleStage; label: string }[] = [
   { key: 'ideation', label: 'Ideation' },
   { key: 'blend-development', label: 'Blend Development' },
@@ -48,6 +189,8 @@ export interface Brand {
     owner: string;
     deadline: string;
   }[];
+  /** 7-stage gate model for Radico Khaitan workflow */
+  stageGates: StageGate[];
 }
 
 export interface BlendTrial {
@@ -105,6 +248,34 @@ export interface MarketingAsset {
   status: 'ready' | 'pending' | 'in-progress' | 'completed';
   owner: string;
   dueDate: string;
+}
+
+export interface BottleDesign {
+  id: string;
+  brandId: string;
+  name: string;
+  volume: string;
+  material: string;
+  closure: string;
+  status: ApprovalStatus | 'in-progress';
+}
+
+export interface LabelVersion {
+  id: string;
+  brandId: string;
+  version: string;
+  status: ApprovalStatus | 'rejected';
+  submittedBy: string;
+  date: string;
+}
+
+export interface PackagingSKU {
+  id: string;
+  brandId: string;
+  sku: string;
+  description: string;
+  packSize: string;
+  status: 'active' | 'pending';
 }
 
 export interface RiskAlert {
@@ -172,6 +343,15 @@ export const demoBrands: Brand[] = [
       { stage: 'distributor-allocation', status: 'upcoming', owner: 'Distribution', deadline: 'Aug 2026' },
       { stage: 'market-launch', status: 'upcoming', owner: 'Marketing', deadline: 'Oct 2026' },
     ],
+    stageGates: createDefaultStageGates({
+      'brand-approval': { status: 'completed', owner: 'Brand Team', plannedStart: 'Oct 2024', plannedEnd: 'Jan 2025', actualStart: 'Oct 2024', actualEnd: 'Jan 2025', subTasks: STAGE_SUB_TASKS['brand-approval'].map((t) => ({ ...t, completed: true })) },
+      'rd-blend': { status: 'completed', owner: 'R&D Lab', plannedStart: 'Jan 2025', plannedEnd: 'Jun 2025', actualStart: 'Jan 2025', actualEnd: 'Jun 2025', subTasks: STAGE_SUB_TASKS['rd-blend'].map((t) => ({ ...t, completed: true })) },
+      packaging: { status: 'completed', owner: 'Design Studio', plannedStart: 'Jun 2025', plannedEnd: 'Aug 2025', actualStart: 'Jun 2025', actualEnd: 'Aug 2025', subTasks: STAGE_SUB_TASKS.packaging.map((t) => ({ ...t, completed: true })) },
+      regulatory: { status: 'pending-approval', owner: 'Compliance', plannedStart: 'Aug 2025', plannedEnd: 'Mar 2026', actualStart: 'Aug 2025', subTasks: STAGE_SUB_TASKS.regulatory.map((t) => ({ ...t, completed: true })) },
+      manufacturing: { status: 'not-started', owner: 'Rampur Distillery', plannedStart: 'Apr 2026', plannedEnd: 'Jun 2026', subTasks: STAGE_SUB_TASKS.manufacturing.map((t) => ({ ...t, completed: false })) },
+      marketing: { status: 'in-progress', owner: 'Marketing Team', plannedStart: 'Mar 2026', plannedEnd: 'Sep 2026', subTasks: STAGE_SUB_TASKS.marketing.map((t, i) => ({ ...t, completed: i < 2 })) },
+      launch: { status: 'not-started', owner: 'Distribution', plannedStart: 'Aug 2026', plannedEnd: 'Oct 2026', subTasks: STAGE_SUB_TASKS.launch.map((t) => ({ ...t, completed: false })) },
+    }),
   },
   {
     id: 'b2',
@@ -196,6 +376,15 @@ export const demoBrands: Brand[] = [
       { stage: 'distributor-allocation', status: 'upcoming', owner: 'Distribution', deadline: 'Oct 2026' },
       { stage: 'market-launch', status: 'upcoming', owner: 'Marketing', deadline: 'Dec 2026' },
     ],
+    stageGates: createDefaultStageGates({
+      'brand-approval': { status: 'completed', owner: 'Brand Team', plannedStart: 'Dec 2024', plannedEnd: 'Mar 2025', actualStart: 'Dec 2024', actualEnd: 'Mar 2025', subTasks: STAGE_SUB_TASKS['brand-approval'].map((t) => ({ ...t, completed: true })) },
+      'rd-blend': { status: 'in-progress', owner: 'Master Blender', plannedStart: 'Mar 2025', plannedEnd: 'Sep 2025', actualStart: 'Mar 2025', subTasks: STAGE_SUB_TASKS['rd-blend'].map((t, i) => ({ ...t, completed: i < 2 })) },
+      packaging: { status: 'not-started', owner: 'Design Studio', plannedStart: 'Sep 2025', plannedEnd: 'Dec 2025', subTasks: STAGE_SUB_TASKS.packaging.map((t) => ({ ...t, completed: false })) },
+      regulatory: { status: 'not-started', owner: 'Compliance', plannedStart: 'Dec 2025', plannedEnd: 'Jun 2026', subTasks: STAGE_SUB_TASKS.regulatory.map((t) => ({ ...t, completed: false })) },
+      manufacturing: { status: 'not-started', owner: 'Rampur Distillery', plannedStart: 'Jun 2026', plannedEnd: 'Aug 2026', subTasks: STAGE_SUB_TASKS.manufacturing.map((t) => ({ ...t, completed: false })) },
+      marketing: { status: 'not-started', owner: 'Marketing', plannedStart: 'Aug 2026', plannedEnd: 'Nov 2026', subTasks: STAGE_SUB_TASKS.marketing.map((t) => ({ ...t, completed: false })) },
+      launch: { status: 'not-started', owner: 'Distribution', plannedStart: 'Oct 2026', plannedEnd: 'Dec 2026', subTasks: STAGE_SUB_TASKS.launch.map((t) => ({ ...t, completed: false })) },
+    }),
   },
   {
     id: 'b3',
@@ -220,6 +409,15 @@ export const demoBrands: Brand[] = [
       { stage: 'distributor-allocation', status: 'upcoming', owner: 'Distribution', deadline: 'Jun 2026' },
       { stage: 'market-launch', status: 'upcoming', owner: 'Marketing', deadline: 'Aug 2026' },
     ],
+    stageGates: createDefaultStageGates({
+      'brand-approval': { status: 'completed', owner: 'Brand Team', plannedStart: 'Mar 2024', plannedEnd: 'Jun 2024', actualStart: 'Mar 2024', actualEnd: 'Jun 2024', subTasks: STAGE_SUB_TASKS['brand-approval'].map((t) => ({ ...t, completed: true })) },
+      'rd-blend': { status: 'completed', owner: 'R&D Lab', plannedStart: 'Jun 2024', plannedEnd: 'Nov 2024', actualStart: 'Jun 2024', actualEnd: 'Nov 2024', subTasks: STAGE_SUB_TASKS['rd-blend'].map((t) => ({ ...t, completed: true })) },
+      packaging: { status: 'completed', owner: 'Design Studio', plannedStart: 'Nov 2024', plannedEnd: 'Jan 2025', actualStart: 'Nov 2024', actualEnd: 'Jan 2025', subTasks: STAGE_SUB_TASKS.packaging.map((t) => ({ ...t, completed: true })) },
+      regulatory: { status: 'completed', owner: 'Compliance', plannedStart: 'Jan 2025', plannedEnd: 'Jul 2025', actualStart: 'Jan 2025', actualEnd: 'Jul 2025', subTasks: STAGE_SUB_TASKS.regulatory.map((t) => ({ ...t, completed: true })) },
+      manufacturing: { status: 'in-progress', owner: 'Sitapur Plant', plannedStart: 'Jan 2026', plannedEnd: 'Apr 2026', actualStart: 'Jan 2026', subTasks: STAGE_SUB_TASKS.manufacturing.map((t, i) => ({ ...t, completed: i < 2 })) },
+      marketing: { status: 'in-progress', owner: 'Marketing Team', plannedStart: 'Feb 2026', plannedEnd: 'Jul 2026', subTasks: STAGE_SUB_TASKS.marketing.map((t, i) => ({ ...t, completed: i < 2 })) },
+      launch: { status: 'not-started', owner: 'Distribution', plannedStart: 'Jun 2026', plannedEnd: 'Aug 2026', subTasks: STAGE_SUB_TASKS.launch.map((t) => ({ ...t, completed: false })) },
+    }),
   },
   {
     id: 'b4',
@@ -244,6 +442,15 @@ export const demoBrands: Brand[] = [
       { stage: 'distributor-allocation', status: 'upcoming', owner: 'Distribution', deadline: 'Feb 2027' },
       { stage: 'market-launch', status: 'upcoming', owner: 'Marketing', deadline: 'Mar 2027' },
     ],
+    stageGates: createDefaultStageGates({
+      'brand-approval': { status: 'completed', owner: 'Brand Team', plannedStart: 'Jun 2025', plannedEnd: 'Sep 2025', actualStart: 'Jun 2025', actualEnd: 'Sep 2025', subTasks: STAGE_SUB_TASKS['brand-approval'].map((t) => ({ ...t, completed: true })) },
+      'rd-blend': { status: 'completed', owner: 'R&D Lab', plannedStart: 'Sep 2025', plannedEnd: 'Feb 2026', actualStart: 'Sep 2025', actualEnd: 'Feb 2026', subTasks: STAGE_SUB_TASKS['rd-blend'].map((t) => ({ ...t, completed: true })) },
+      packaging: { status: 'in-progress', owner: 'Design Studio', plannedStart: 'Feb 2026', plannedEnd: 'May 2026', actualStart: 'Feb 2026', subTasks: STAGE_SUB_TASKS.packaging.map((t, i) => ({ ...t, completed: i < 2 })) },
+      regulatory: { status: 'not-started', owner: 'Compliance', plannedStart: 'May 2026', plannedEnd: 'Nov 2026', subTasks: STAGE_SUB_TASKS.regulatory.map((t) => ({ ...t, completed: false })) },
+      manufacturing: { status: 'not-started', owner: 'Rampur Distillery', plannedStart: 'Nov 2026', plannedEnd: 'Jan 2027', subTasks: STAGE_SUB_TASKS.manufacturing.map((t) => ({ ...t, completed: false })) },
+      marketing: { status: 'not-started', owner: 'Marketing', plannedStart: 'Dec 2026', plannedEnd: 'Feb 2027', subTasks: STAGE_SUB_TASKS.marketing.map((t) => ({ ...t, completed: false })) },
+      launch: { status: 'not-started', owner: 'Distribution', plannedStart: 'Feb 2027', plannedEnd: 'Mar 2027', subTasks: STAGE_SUB_TASKS.launch.map((t) => ({ ...t, completed: false })) },
+    }),
   },
 ];
 
@@ -311,6 +518,31 @@ export const demoMarketingAssets: MarketingAsset[] = [
   { id: 'ma6', brandId: 'b3', asset: 'POS Display Units', status: 'completed', owner: 'Marketing Team', dueDate: 'Apr 2026' },
   { id: 'ma7', brandId: 'b3', asset: 'Social Media Kit', status: 'in-progress', owner: 'Digital Team', dueDate: 'May 2026' },
   { id: 'ma8', brandId: 'b3', asset: 'Influencer Pack', status: 'pending', owner: 'PR Agency', dueDate: 'Jun 2026' },
+];
+
+export const demoBottleDesigns: BottleDesign[] = [
+  { id: 'bd1', brandId: 'b1', name: 'Royal Ranthambore Reserve 750ml', volume: '750ml', material: 'Premium Glass', closure: 'Cork Top', status: 'approved' },
+  { id: 'bd2', brandId: 'b1', name: 'Royal Ranthambore Reserve 375ml', volume: '375ml', material: 'Premium Glass', closure: 'Screw Cap', status: 'in-progress' },
+  { id: 'bd3', brandId: 'b2', name: 'Rampur Barrel Select 700ml', volume: '700ml', material: 'Premium Glass', closure: 'Cork Top', status: 'pending' },
+  { id: 'bd4', brandId: 'b3', name: 'Magic Moments Luxe 750ml', volume: '750ml', material: 'Premium Glass', closure: 'Screw Cap', status: 'approved' },
+  { id: 'bd5', brandId: 'b4', name: 'Morpheus Black 750ml', volume: '750ml', material: 'Premium Glass', closure: 'Cork Top', status: 'in-progress' },
+];
+
+export const demoLabelVersions: LabelVersion[] = [
+  { id: 'lv1', brandId: 'b1', version: 'v3.2', status: 'approved', submittedBy: 'Design Studio', date: 'Feb 2026' },
+  { id: 'lv2', brandId: 'b1', version: 'v3.1', status: 'rejected', submittedBy: 'Design Studio', date: 'Jan 2026' },
+  { id: 'lv3', brandId: 'b1', version: 'v3.0', status: 'rejected', submittedBy: 'Creative Agency', date: 'Dec 2025' },
+  { id: 'lv4', brandId: 'b3', version: 'v2.0', status: 'approved', submittedBy: 'Design Studio', date: 'Mar 2026' },
+  { id: 'lv5', brandId: 'b4', version: 'v1.2', status: 'pending', submittedBy: 'Design Studio', date: 'Apr 2026' },
+];
+
+export const demoPackagingSKUs: PackagingSKU[] = [
+  { id: 'ps1', brandId: 'b1', sku: 'RRR-750-STD', description: 'Standard 750ml', packSize: '12 units', status: 'active' },
+  { id: 'ps2', brandId: 'b1', sku: 'RRR-375-STD', description: 'Standard 375ml', packSize: '24 units', status: 'pending' },
+  { id: 'ps3', brandId: 'b1', sku: 'RRR-750-GFT', description: 'Gift Box 750ml', packSize: '6 units', status: 'pending' },
+  { id: 'ps4', brandId: 'b2', sku: 'RBS-700-STD', description: 'Standard 700ml', packSize: '12 units', status: 'pending' },
+  { id: 'ps5', brandId: 'b3', sku: 'MML-750-STD', description: 'Standard 750ml', packSize: '12 units', status: 'active' },
+  { id: 'ps6', brandId: 'b4', sku: 'MB-750-STD', description: 'Standard 750ml', packSize: '12 units', status: 'pending' },
 ];
 
 export const demoRiskAlerts: RiskAlert[] = [

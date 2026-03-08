@@ -16,7 +16,7 @@ export function ReadinessGauge({ score, breakdown, size = 'lg', className }: Rea
   };
 
   return (
-    <div className={cn('rounded-lg border bg-card p-5', className)}>
+    <div className={cn('rounded-lg border border-white/20 bg-card/75 backdrop-blur-xl p-5', className)}>
       <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">Launch Readiness</p>
       <div className="flex items-center gap-4 mb-4">
         <div className={cn(

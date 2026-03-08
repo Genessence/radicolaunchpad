@@ -1,18 +1,22 @@
 import { useBrandLaunch } from '@/contexts/BrandLaunchContext';
+import { useAuth, type Role } from '@/contexts/AuthContext';
 import { calculateLaunchReadiness, getTotalProjectedRevenue, LIFECYCLE_STAGES } from '@/data/mockData';
+import { demoBottleDesigns, demoLabelVersions, demoPackagingSKUs } from '@/data/mockData';
 import { KPICard } from '@/components/KPICard';
 import { ReadinessGauge } from '@/components/ReadinessGauge';
 import { StatusBadge } from '@/components/StatusBadge';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
+import { PageHeader } from '@/components/PageHeader';
+import { BrandBriefCard } from '@/components/BrandBriefCard';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  FunnelChart, Funnel, Cell, LabelList, PieChart, Pie, LineChart, Line,
+  Cell,
 } from 'recharts';
 import {
   Briefcase, TrendingUp, IndianRupee, AlertTriangle, Clock, Zap, ArrowRight,
-  CheckCircle2, Activity,
+  CheckCircle2, Activity, FlaskConical, Star, Package, Factory, Megaphone,
 } from 'lucide-react';
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,67 +24,246 @@ import { useNavigate } from 'react-router-dom';
 
 const CHART_COLORS = ['hsl(220, 60%, 20%)', 'hsl(42, 75%, 55%)', 'hsl(220, 50%, 30%)', 'hsl(42, 65%, 45%)', 'hsl(199, 89%, 48%)'];
 
+function DashboardKPIs({ role }: { role: Role }) {
+  const { state, dispatch, getFilteredBrands, getOverallReadiness, getPendingApprovalBrands } = useBrandLaunch();
+  const brands = getFilteredBrands();
+  const readiness = getOverallReadiness();
+  const totalRevenue = getTotalProjectedRevenue(brands);
+  const [delayDays, setDelayDays] = useState([30]);
+
+  const pendingApprovals = state.stateCompliance.filter(
+    (c) =>
+      (state.selectedBrandId === 'all' || c.brandId === state.selectedBrandId) &&
+      (c.labelRegistration === 'pending' || c.brandRegistration === 'pending' || c.priceApproval === 'pending')
+  ).length;
+  const stageGateApprovals = getPendingApprovalBrands().length;
+
+  const trials = state.blendTrials.filter(
+    (t) => state.selectedBrandId === 'all' || t.brandId === state.selectedBrandId
+  );
+  const trialsInProgress = trials.filter((t) => t.status === 'in-progress' || t.status === 'pending-review').length;
+  const avgSensory = trials.length > 0 ? Math.round(trials.reduce((s, t) => s + t.sensoryScore, 0) / trials.length) : 0;
+
+  const bottleDesigns = demoBottleDesigns.filter(
+    (b) => state.selectedBrandId === 'all' || b.brandId === state.selectedBrandId
+  );
+  const labelVersions = demoLabelVersions.filter(
+    (v) => state.selectedBrandId === 'all' || v.brandId === state.selectedBrandId
+  );
+  const skus = demoPackagingSKUs.filter(
+    (s) => state.selectedBrandId === 'all' || s.brandId === state.selectedBrandId
+  );
+  const labelsApproved = labelVersions.filter((v) => v.status === 'approved').length;
+  const skusActive = skus.filter((s) => s.status === 'active').length;
+
+  const batches = state.productionBatches.filter(
+    (b) => state.selectedBrandId === 'all' || b.brandId === state.selectedBrandId
+  );
+  const distributors = state.distributors.filter(
+    (d) => state.selectedBrandId === 'all' || d.brandId === state.selectedBrandId
+  );
+  const compliance = state.stateCompliance.filter(
+    (c) => state.selectedBrandId === 'all' || c.brandId === state.selectedBrandId
+  );
+  const complianceApproved = compliance.reduce(
+    (sum, c) =>
+      sum +
+      (c.labelRegistration === 'approved' ? 1 : 0) +
+      (c.brandRegistration === 'approved' ? 1 : 0) +
+      (c.priceApproval === 'approved' ? 1 : 0),
+    0
+  );
+  const avgDistReadiness =
+    distributors.length > 0 ? Math.round(distributors.reduce((s, d) => s + d.readinessScore, 0) / distributors.length) : 0;
+
+  const assets = state.marketingAssets.filter(
+    (a) => state.selectedBrandId === 'all' || a.brandId === state.selectedBrandId
+  );
+  const assetsReady = assets.filter((a) => a.status === 'ready' || a.status === 'completed').length;
+  const marketingReadiness = assets.length > 0 ? Math.round((assetsReady / assets.length) * 100) : 0;
+
+  if (role === 'rd') {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        <KPICard title="Blend Trials" value={trials.length} icon={FlaskConical} subtitle="Total trials" />
+        <KPICard title="Trials In Progress" value={trialsInProgress} icon={Clock} highlight />
+        <KPICard title="Avg Sensory Score" value={avgSensory} icon={Star} subtitle="Across trials" />
+        <KPICard title="Approved Trials" value={trials.filter((t) => t.status === 'approved').length} icon={CheckCircle2} />
+      </div>
+    );
+  }
+  if (role === 'packing') {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        <KPICard title="Bottle Designs" value={bottleDesigns.length} icon={Package} subtitle="Total designs" />
+        <KPICard title="Labels Approved" value={labelsApproved} icon={CheckCircle2} highlight />
+        <KPICard title="Active SKUs" value={skusActive} icon={Package} subtitle={`of ${skus.length} total`} />
+        <KPICard title="Packaging Readiness" value={skus.length > 0 ? Math.round((skusActive / skus.length) * 100) : 0} icon={TrendingUp} subtitle="%" />
+      </div>
+    );
+  }
+  if (role === 'production') {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+        <KPICard title="Production Batches" value={batches.length} icon={Factory} subtitle="Scheduled/active" />
+        <KPICard title="Compliance Approvals" value={complianceApproved} icon={CheckCircle2} subtitle={`of ${compliance.length * 3} fields`} />
+        <KPICard title="Distributor Readiness" value={`${avgDistReadiness}%`} icon={TrendingUp} highlight />
+        <KPICard title="Active Distributors" value={distributors.filter((d) => d.licenseStatus === 'approved').length} icon={Briefcase} />
+        <KPICard title="In Production" value={batches.filter((b) => b.status === 'in-progress').length} icon={Clock} />
+      </div>
+    );
+  }
+  if (role === 'marketing') {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        <KPICard title="Marketing Readiness" value={`${marketingReadiness}%`} icon={Megaphone} highlight />
+        <KPICard title="Assets Ready" value={`${assetsReady}/${assets.length}`} icon={CheckCircle2} />
+        <KPICard title="In Progress" value={assets.filter((a) => a.status === 'in-progress').length} icon={Clock} />
+        <KPICard title="Pending" value={assets.filter((a) => a.status === 'pending').length} icon={AlertTriangle} />
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+      <KPICard title="Brands in Pipeline" value={brands.length} icon={Briefcase} subtitle="Active launches" />
+      <KPICard title="Launch Readiness" value={`${readiness}%`} icon={TrendingUp} highlight subtitle="Composite score" />
+      <KPICard title="Projected Revenue" value={`₹${totalRevenue} Cr`} icon={IndianRupee} trend={{ value: '+12% QoQ', positive: true }} />
+      <KPICard title="Stage Gate Approvals" value={stageGateApprovals} icon={AlertTriangle} highlight subtitle="Pending admin review" />
+      <KPICard title="State Approvals" value={pendingApprovals} icon={AlertTriangle} subtitle="Label/brand/price" />
+      <KPICard title="Avg Launch Cycle" value="180 Days" icon={Clock} trend={{ value: '-8 days', positive: true }} />
+    </div>
+  );
+}
+
 export default function Dashboard() {
-  const { state, dispatch, getFilteredBrands, getOverallReadiness } = useBrandLaunch();
+  const { state, dispatch, getFilteredBrands, getOverallReadiness, getPendingApprovalBrands } = useBrandLaunch();
+  const { role } = useAuth();
   const navigate = useNavigate();
   const brands = getFilteredBrands();
   const readiness = getOverallReadiness();
   const totalRevenue = getTotalProjectedRevenue(brands);
   const [delayDays, setDelayDays] = useState([30]);
 
-  const pendingApprovals = state.stateCompliance.filter(c =>
-    (state.selectedBrandId === 'all' || c.brandId === state.selectedBrandId) &&
-    (c.labelRegistration === 'pending' || c.brandRegistration === 'pending' || c.priceApproval === 'pending')
+  const pendingApprovals = state.stateCompliance.filter(
+    (c) =>
+      (state.selectedBrandId === 'all' || c.brandId === state.selectedBrandId) &&
+      (c.labelRegistration === 'pending' || c.brandRegistration === 'pending' || c.priceApproval === 'pending')
   ).length;
 
-  // Readiness breakdown (avg across filtered brands)
-  const avgReadiness = brands.length > 0 ? {
-    compliance: Math.round(brands.reduce((s, b) => s + b.readiness.compliance, 0) / brands.length),
-    production: Math.round(brands.reduce((s, b) => s + b.readiness.production, 0) / brands.length),
-    distributor: Math.round(brands.reduce((s, b) => s + b.readiness.distributor, 0) / brands.length),
-    marketing: Math.round(brands.reduce((s, b) => s + b.readiness.marketing, 0) / brands.length),
-  } : { compliance: 0, production: 0, distributor: 0, marketing: 0 };
+  const avgReadiness =
+    brands.length > 0
+      ? {
+          compliance: Math.round(brands.reduce((s, b) => s + b.readiness.compliance, 0) / brands.length),
+          production: Math.round(brands.reduce((s, b) => s + b.readiness.production, 0) / brands.length),
+          distributor: Math.round(brands.reduce((s, b) => s + b.readiness.distributor, 0) / brands.length),
+          marketing: Math.round(brands.reduce((s, b) => s + b.readiness.marketing, 0) / brands.length),
+        }
+      : { compliance: 0, production: 0, distributor: 0, marketing: 0 };
 
-  // Revenue by state
   const revenueByState = state.stateOpportunities
-    .filter(s => s.projectedRevenue > 0)
+    .filter((s) => s.projectedRevenue > 0)
     .sort((a, b) => b.projectedRevenue - a.projectedRevenue)
     .slice(0, 6)
-    .map(s => ({ name: s.stateCode, revenue: s.projectedRevenue }));
+    .map((s) => ({ name: s.stateCode, revenue: s.projectedRevenue }));
 
-  // Funnel data
-  const funnelData = LIFECYCLE_STAGES.map(stage => ({
+  const funnelData = LIFECYCLE_STAGES.map((stage) => ({
     name: stage.label,
-    value: state.brands.filter(b => {
-      const stageIdx = LIFECYCLE_STAGES.findIndex(s => s.key === stage.key);
-      const brandIdx = LIFECYCLE_STAGES.findIndex(s => s.key === b.currentStage);
+    value: state.brands.filter((b) => {
+      const stageIdx = LIFECYCLE_STAGES.findIndex((s) => s.key === stage.key);
+      const brandIdx = LIFECYCLE_STAGES.findIndex((s) => s.key === b.currentStage);
       return brandIdx >= stageIdx;
     }).length,
   }));
 
-  // Revenue delay impact
   const delayImpact = Math.round(totalRevenue * (delayDays[0] / 365) * 0.6);
 
-  // Simulate approval targets
-  const pendingSimulations = state.stateCompliance.filter(c =>
-    c.labelRegistration === 'pending' || c.priceApproval === 'pending'
-  ).slice(0, 3);
+  const pendingSimulations = state.stateCompliance
+    .filter((c) => c.labelRegistration === 'pending' || c.priceApproval === 'pending')
+    .slice(0, 3);
+
+  const showFullDashboard = role === 'admin';
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Executive Dashboard</h1>
-        <p className="text-sm text-muted-foreground">Real-time brand launch portfolio overview</p>
-      </div>
+      <PageHeader
+        title={role === 'admin' ? 'Executive Dashboard' : 'Dashboard'}
+        description={
+          role === 'admin'
+            ? 'Real-time brand launch portfolio overview'
+            : `Your ${role === 'rd' ? 'R&D' : role === 'packing' ? 'Packaging' : role === 'production' ? 'Production' : 'Marketing'} overview`
+        }
+        breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Dashboard' }]}
+      />
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
-        <KPICard title="Brands in Pipeline" value={brands.length} icon={Briefcase} subtitle="Active launches" />
-        <KPICard title="Launch Readiness" value={`${readiness}%`} icon={TrendingUp} highlight subtitle="Composite score" />
-        <KPICard title="Projected Revenue" value={`₹${totalRevenue} Cr`} icon={IndianRupee} trend={{ value: '+12% QoQ', positive: true }} />
-        <KPICard title="Pending Approvals" value={pendingApprovals} icon={AlertTriangle} subtitle="Across states" />
-        <KPICard title="Avg Launch Cycle" value="180 Days" icon={Clock} trend={{ value: '-8 days', positive: true }} />
-      </div>
+      <BrandBriefCard />
+
+      <DashboardKPIs role={role ?? 'admin'} />
+
+      {(role === 'admin' && (() => {
+        const pending = getPendingApprovalBrands();
+        return pending.length > 0;
+      })()) && (
+        <Card className="border-gold/50 bg-gold/5">
+          <CardContent className="py-4 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-gold" />
+              <span className="font-medium">{getPendingApprovalBrands().length} stage gate(s) pending your approval</span>
+            </div>
+            <Button variant="outline" size="sm" onClick={() => navigate('/admin/approvals')}>
+              Review Approval Queue
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {!showFullDashboard && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Quick Links</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-2">
+              {role === 'rd' && (
+                <Button variant="outline" size="sm" onClick={() => navigate('/rd-blending')}>
+                  R&D / Blending
+                </Button>
+              )}
+              {role === 'packing' && (
+                <Button variant="outline" size="sm" onClick={() => navigate('/packaging')}>
+                  Packaging & Labels
+                </Button>
+              )}
+              {(role === 'production' || role === 'admin') && (
+                <>
+                  <Button variant="outline" size="sm" onClick={() => navigate('/production')}>
+                    Production
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => navigate('/compliance')}>
+                    Compliance
+                  </Button>
+                </>
+              )}
+              {role === 'marketing' && (
+                <>
+                  <Button variant="outline" size="sm" onClick={() => navigate('/marketing')}>
+                    Marketing Readiness
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => navigate('/analytics')}>
+                    Analytics
+                  </Button>
+                </>
+              )}
+              <Button variant="outline" size="sm" onClick={() => navigate('/pipeline')}>
+                Brand Pipeline
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {showFullDashboard && (
+        <>
 
       {/* Row 2: Readiness + Funnel + Next Actions */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -334,6 +517,8 @@ export default function Dashboard() {
           </div>
         </CardContent>
       </Card>
+        </>
+      )}
     </div>
   );
 }

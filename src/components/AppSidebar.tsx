@@ -1,6 +1,6 @@
 import {
   LayoutDashboard, GitBranch, CircleDot, FlaskConical, Package, ShieldCheck,
-  Factory, Truck, Rocket, BarChart3, FileText, Settings, Megaphone, AlertTriangle,
+  Factory, Truck, BarChart3, FileText, Settings, Megaphone, AlertTriangle, ClipboardCheck,
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useLocation } from 'react-router-dom';
@@ -8,8 +8,9 @@ import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent,
   SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar,
 } from '@/components/ui/sidebar';
+import { useAuth, type Role } from '@/contexts/AuthContext';
 
-const navItems = [
+const ALL_NAV_ITEMS = [
   { title: 'Dashboard', url: '/', icon: LayoutDashboard },
   { title: 'Brand Pipeline', url: '/pipeline', icon: GitBranch },
   { title: 'Brand Lifecycle', url: '/lifecycle', icon: CircleDot },
@@ -23,12 +24,36 @@ const navItems = [
   { title: 'Analytics', url: '/analytics', icon: BarChart3 },
   { title: 'Documents', url: '/documents', icon: FileText },
   { title: 'Admin', url: '/admin', icon: Settings },
+  { title: 'Approval Queue', url: '/admin/approvals', icon: ClipboardCheck },
 ];
+
+const ROLE_ALLOWED_URLS: Record<Role, string[]> = {
+  admin: ALL_NAV_ITEMS.map((i) => i.url),
+  rd: ['/', '/pipeline', '/lifecycle', '/rd-blending', '/documents'],
+  packing: ['/', '/pipeline', '/packaging', '/documents'],
+  production: ['/', '/pipeline', '/lifecycle', '/compliance', '/production', '/distributors', '/documents'],
+  marketing: ['/', '/pipeline', '/lifecycle', '/marketing', '/analytics', '/documents'],
+};
+
+export function getNavItemsForRole(role: Role | null) {
+  if (!role) return [];
+  const allowed = ROLE_ALLOWED_URLS[role] ?? [];
+  return ALL_NAV_ITEMS.filter((item) => allowed.includes(item.url));
+}
+
+export function isPathAllowedForRole(pathname: string, role: Role | null): boolean {
+  if (!role) return false;
+  const allowed = ROLE_ALLOWED_URLS[role] ?? [];
+  const normalized = pathname === '' ? '/' : pathname;
+  return allowed.includes(normalized);
+}
 
 export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === 'collapsed';
   const location = useLocation();
+  const { role } = useAuth();
+  const navItems = getNavItemsForRole(role);
 
   return (
     <Sidebar collapsible="icon" className="border-r-0">

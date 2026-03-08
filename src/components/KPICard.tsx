@@ -14,8 +14,8 @@ interface KPICardProps {
 export function KPICard({ title, value, subtitle, icon: Icon, trend, className, highlight }: KPICardProps) {
   return (
     <div className={cn(
-      "rounded-lg border bg-card p-5 transition-all hover:shadow-md",
-      highlight && "border-gold/30 bg-gradient-to-br from-card to-gold/5",
+      "rounded-lg border border-white/20 bg-card/75 backdrop-blur-xl p-5 transition-all hover:shadow-md",
+      highlight && "border-gold/30 bg-gradient-to-br from-card/80 to-gold/5",
       className
     )}>
       <div className="flex items-start justify-between">

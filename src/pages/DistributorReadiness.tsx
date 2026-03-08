@@ -3,19 +3,22 @@ import { KPICard } from '@/components/KPICard';
 import { StatusBadge } from '@/components/StatusBadge';
 import { Progress } from '@/components/ui/progress';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { PageHeader } from '@/components/PageHeader';
+import { BrandBriefCard } from '@/components/BrandBriefCard';
 import { Truck, Users, FileCheck, MapPin } from 'lucide-react';
 
 export default function DistributorReadiness() {
   const { state } = useBrandLaunch();
-  const distributors = state.distributors.filter(d =>
-    state.selectedBrandId === 'all' || d.brandId === state.selectedBrandId
+  const distributors = state.distributors.filter(
+    (d) => state.selectedBrandId === 'all' || d.brandId === state.selectedBrandId
   );
 
-  const activeDistributors = distributors.filter(d => d.licenseStatus === 'approved').length;
-  const avgReadiness = distributors.length > 0
-    ? Math.round(distributors.reduce((s, d) => s + d.readinessScore, 0) / distributors.length)
-    : 0;
-  const pendingLicenses = distributors.filter(d => d.licenseStatus === 'pending').length;
+  const activeDistributors = distributors.filter((d) => d.licenseStatus === 'approved').length;
+  const avgReadiness =
+    distributors.length > 0
+      ? Math.round(distributors.reduce((s, d) => s + d.readinessScore, 0) / distributors.length)
+      : 0;
+  const pendingLicenses = distributors.filter((d) => d.licenseStatus === 'pending').length;
 
   // Group by state for coverage map
   const stateGroups = distributors.reduce((acc, d) => {
@@ -26,10 +29,13 @@ export default function DistributorReadiness() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Distributor Readiness</h1>
-        <p className="text-sm text-muted-foreground">Distributor licensing, inventory, and coverage tracking</p>
-      </div>
+      <PageHeader
+        title="Distributor Readiness"
+        description="Distributor licensing, inventory, and coverage tracking"
+        breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Distributor Readiness' }]}
+      />
+
+      <BrandBriefCard />
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <KPICard title="Active Distributors" value={activeDistributors} icon={Users} />

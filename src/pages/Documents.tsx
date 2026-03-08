@@ -1,6 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { PageHeader } from '@/components/PageHeader';
+import { BrandBriefCard } from '@/components/BrandBriefCard';
 import { FileText, Folder, Search } from 'lucide-react';
 
 const folders = [
@@ -23,16 +25,19 @@ const recentDocs = [
 export default function Documents() {
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Documents</h1>
-          <p className="text-sm text-muted-foreground">Centralized document repository</p>
-        </div>
-        <div className="relative w-64">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Search documents..." className="pl-9" />
-        </div>
-      </div>
+      <PageHeader
+        title="Documents"
+        description="Centralized document repository"
+        breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Documents' }]}
+        actions={
+          <div className="relative w-64">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input placeholder="Search documents..." className="pl-9" />
+          </div>
+        }
+      />
+
+      <BrandBriefCard />
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
         {folders.map(f => (

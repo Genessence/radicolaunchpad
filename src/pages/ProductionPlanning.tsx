@@ -1,29 +1,71 @@
+import { Link } from 'react-router-dom';
 import { useBrandLaunch } from '@/contexts/BrandLaunchContext';
 import { KPICard } from '@/components/KPICard';
 import { StatusBadge } from '@/components/StatusBadge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Factory, Clock, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { PageHeader } from '@/components/PageHeader';
+import { BrandBriefCard } from '@/components/BrandBriefCard';
+import { Factory, Clock, CheckCircle2, AlertTriangle, Send, ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+const MANUFACTURING_STAGE_KEY = 'manufacturing' as const;
+
 export default function ProductionPlanning() {
-  const { state } = useBrandLaunch();
-  const batches = state.productionBatches.filter(b =>
-    state.selectedBrandId === 'all' || b.brandId === state.selectedBrandId
+  const { state, dispatch } = useBrandLaunch();
+  const batches = state.productionBatches.filter(
+    (b) => state.selectedBrandId === 'all' || b.brandId === state.selectedBrandId
   );
 
-  const completed = batches.filter(b => b.status === 'completed').length;
-  const inProgress = batches.filter(b => b.status === 'in-progress').length;
+  const completed = batches.filter((b) => b.status === 'completed').length;
+  const inProgress = batches.filter((b) => b.status === 'in-progress').length;
   const totalCases = batches.reduce((s, b) => s + b.batchSize, 0);
 
   // Gantt-like timeline
-  const plants = [...new Set(batches.map(b => b.plant))];
+  const plants = [...new Set(batches.map((b) => b.plant))];
+  const brand = state.selectedBrandId !== 'all'
+    ? state.brands.find((b) => b.id === state.selectedBrandId)
+    : state.brands[0];
+  const mfgGate = brand?.stageGates.find((g) => g.key === MANUFACTURING_STAGE_KEY);
+  const canSubmitMfg = mfgGate?.status === 'in-progress' && mfgGate.subTasks.every((t) => t.completed);
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Production Planning</h1>
-        <p className="text-sm text-muted-foreground">Manufacturing scheduling and batch management</p>
-      </div>
+      <PageHeader
+        title="Production Planning"
+        description="Manufacturing scheduling and batch management"
+        breadcrumbs={[{ label: 'Home', href: '/' }, { label: 'Production Planning' }]}
+      />
+
+      <BrandBriefCard />
+
+      {brand && mfgGate && (
+        <Card className={mfgGate.status === 'pending-approval' ? 'border-gold/50' : ''}>
+          <CardContent className="py-4 flex items-center justify-between">
+            <div>
+              <p className="font-medium">Manufacturing Stage Gate</p>
+              <p className="text-sm text-muted-foreground">
+                {brand.name} · <StatusBadge status={mfgGate.status} />
+                {mfgGate.subTasks.some((t) => !t.completed) && (
+                  <span className="ml-2">
+                    {mfgGate.subTasks.filter((t) => t.completed).length}/{mfgGate.subTasks.length} sub-tasks complete
+                  </span>
+                )}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button asChild variant="outline" size="sm">
+                <Link to="/lifecycle" state={{ brandId: brand.id }}><ExternalLink className="h-3.5 w-3.5 mr-1" />View Lifecycle</Link>
+              </Button>
+              {canSubmitMfg && (
+                <Button size="sm" onClick={() => dispatch({ type: 'SUBMIT_FOR_APPROVAL', brandId: brand.id, stageKey: MANUFACTURING_STAGE_KEY })}>
+                  <Send className="h-3.5 w-3.5 mr-1" />Submit for approval
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <KPICard title="Total Batches" value={batches.length} icon={Factory} />
