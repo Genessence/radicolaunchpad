@@ -35,6 +35,8 @@ const ROLE_ALLOWED_URLS: Record<Role, string[]> = {
   marketing: ['/', '/pipeline', '/lifecycle', '/marketing', '/analytics', '/documents'],
 };
 
+const RELATED_SECTION_URLS = ['/rd-blending', '/packaging', '/compliance', '/production', '/marketing', '/distributors'];
+
 export function getNavItemsForRole(role: Role | null) {
   if (!role) return [];
   const allowed = ROLE_ALLOWED_URLS[role] ?? [];
@@ -53,7 +55,7 @@ export function AppSidebar() {
   const collapsed = state === 'collapsed';
   const location = useLocation();
   const { role } = useAuth();
-  const navItems = getNavItemsForRole(role);
+  const navItems = getNavItemsForRole(role).filter((item) => !RELATED_SECTION_URLS.includes(item.url));
 
   return (
     <Sidebar collapsible="icon" className="border-r-0">
@@ -72,7 +74,7 @@ export function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {navItems.map((item) => {
+              {navItems.filter((item) => item.url !== "/lifecycle").map((item) => {
                 const isActive = location.pathname === item.url;
                 return (
                   <SidebarMenuItem key={item.title}>

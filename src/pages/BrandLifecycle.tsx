@@ -34,6 +34,16 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
+import { isPathAllowedForRole } from '@/components/AppSidebar';
+
+const RELATED_SECTIONS = [
+  { label: 'R&D / Blending', url: '/rd-blending' },
+  { label: 'Packaging', url: '/packaging' },
+  { label: 'Compliance', url: '/compliance' },
+  { label: 'Production', url: '/production' },
+  { label: 'Marketing', url: '/marketing' },
+  { label: 'Distributors', url: '/distributors' },
+] as const;
 
 function StageGateCard({
   gate,
@@ -278,24 +288,11 @@ export default function BrandLifecycle() {
         <CardContent className="py-4">
           <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">Related Sections</p>
           <div className="flex flex-wrap gap-2">
-            <Button asChild variant="outline" size="sm">
-              <Link to="/rd-blending" state={{ brandId: brand.id }}>R&D / Blending</Link>
-            </Button>
-            <Button asChild variant="outline" size="sm">
-              <Link to="/packaging" state={{ brandId: brand.id }}>Packaging</Link>
-            </Button>
-            <Button asChild variant="outline" size="sm">
-              <Link to="/compliance" state={{ brandId: brand.id }}>Compliance</Link>
-            </Button>
-            <Button asChild variant="outline" size="sm">
-              <Link to="/production" state={{ brandId: brand.id }}>Production</Link>
-            </Button>
-            <Button asChild variant="outline" size="sm">
-              <Link to="/marketing" state={{ brandId: brand.id }}>Marketing</Link>
-            </Button>
-            <Button asChild variant="outline" size="sm">
-              <Link to="/distributors" state={{ brandId: brand.id }}>Distributors</Link>
-            </Button>
+            {RELATED_SECTIONS.filter((s) => isPathAllowedForRole(s.url, role)).map((section) => (
+              <Button key={section.url} asChild variant="outline" size="sm">
+                <Link to={section.url} state={{ brandId: brand.id }}>{section.label}</Link>
+              </Button>
+            ))}
           </div>
         </CardContent>
       </Card>
