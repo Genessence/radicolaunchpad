@@ -583,6 +583,84 @@ export const demoStateOpportunities: StateOpportunity[] = [
   { state: 'Andhra Pradesh', stateCode: 'AP', projectedRevenue: 14, distributorCoverage: 0, approvalStatus: 'not-started', labelApproval: 'not-started', priceApproval: 'not-started' },
 ];
 
+// ─── Team Process Types ─────────────────────────────────────────────────────
+
+export type TeamRole = 'rd' | 'marketing' | 'packing' | 'production';
+
+export type TeamStageStatus = 'not-started' | 'in-progress' | 'completed';
+
+export interface TeamSubTask {
+  id: string;
+  label: string;
+  completed: boolean;
+}
+
+export interface TeamStage {
+  id: string;
+  name: string;
+  description: string;
+  order: number;
+  status: TeamStageStatus;
+  subTasks: TeamSubTask[];
+  createdAt: string;
+}
+
+export interface TeamProcess {
+  teamRole: TeamRole;
+  teamLabel: string;
+  stages: TeamStage[];
+}
+
+export const initialTeamProcesses: TeamProcess[] = [
+  {
+    teamRole: 'rd',
+    teamLabel: 'R&D Team',
+    stages: [
+      { id: 'rd-s1', name: 'Ideation', description: 'Concept development and initial market research for new blend or variant.', order: 1, status: 'completed', subTasks: [], createdAt: '2025-01-10' },
+      { id: 'rd-s2', name: 'Formulation', description: 'Define recipe, ingredient proportions, and process parameters.', order: 2, status: 'completed', subTasks: [], createdAt: '2025-01-10' },
+      { id: 'rd-s3', name: 'Lab Trials', description: 'Conduct small-scale lab trials and document observations.', order: 3, status: 'in-progress', subTasks: [], createdAt: '2025-01-10' },
+      { id: 'rd-s4', name: 'Sensory Evaluation', description: 'Panel tasting and sensory scoring against benchmarks.', order: 4, status: 'not-started', subTasks: [], createdAt: '2025-01-10' },
+      { id: 'rd-s5', name: 'Scale-Up Trials', description: 'Pilot production to validate the formula at larger volumes.', order: 5, status: 'not-started', subTasks: [], createdAt: '2025-01-10' },
+      { id: 'rd-s6', name: 'Sign-Off', description: 'Final R&D sign-off and formula handover to production.', order: 6, status: 'not-started', subTasks: [], createdAt: '2025-01-10' },
+    ],
+  },
+  {
+    teamRole: 'marketing',
+    teamLabel: 'Marketing Team',
+    stages: [
+      { id: 'mkt-s1', name: 'Brief & Positioning', description: 'Define target audience, brand positioning, and campaign brief.', order: 1, status: 'completed', subTasks: [], createdAt: '2025-02-01' },
+      { id: 'mkt-s2', name: 'Creative Development', description: 'Develop visuals, copy, and creative assets aligned to brand identity.', order: 2, status: 'in-progress', subTasks: [], createdAt: '2025-02-01' },
+      { id: 'mkt-s3', name: 'Campaign Planning', description: 'Plan media mix, timelines, budget allocation, and channel strategy.', order: 3, status: 'not-started', subTasks: [], createdAt: '2025-02-01' },
+      { id: 'mkt-s4', name: 'Approvals', description: 'Internal and regulatory review of all campaign materials.', order: 4, status: 'not-started', subTasks: [], createdAt: '2025-02-01' },
+      { id: 'mkt-s5', name: 'Launch Execution', description: 'Execute campaign across channels and manage live assets.', order: 5, status: 'not-started', subTasks: [], createdAt: '2025-02-01' },
+      { id: 'mkt-s6', name: 'Post-Launch Review', description: 'Analyze campaign performance, collect learnings, and report ROI.', order: 6, status: 'not-started', subTasks: [], createdAt: '2025-02-01' },
+    ],
+  },
+  {
+    teamRole: 'packing',
+    teamLabel: 'Packing Team',
+    stages: [
+      { id: 'pk-s1', name: 'Design Specification', description: 'Define packaging dimensions, materials, and finish requirements.', order: 1, status: 'completed', subTasks: [], createdAt: '2025-01-20' },
+      { id: 'pk-s2', name: 'Prototype', description: 'Create and review physical packaging prototypes with design team.', order: 2, status: 'in-progress', subTasks: [], createdAt: '2025-01-20' },
+      { id: 'pk-s3', name: 'Compliance Check', description: 'Verify packaging against regulatory label and safety requirements.', order: 3, status: 'not-started', subTasks: [], createdAt: '2025-01-20' },
+      { id: 'pk-s4', name: 'Production Sampling', description: 'Run a production sample batch and inspect quality.', order: 4, status: 'not-started', subTasks: [], createdAt: '2025-01-20' },
+      { id: 'pk-s5', name: 'Final Approval', description: 'Sign-off from brand and compliance teams before full production.', order: 5, status: 'not-started', subTasks: [], createdAt: '2025-01-20' },
+    ],
+  },
+  {
+    teamRole: 'production',
+    teamLabel: 'Production Team',
+    stages: [
+      { id: 'prod-s1', name: 'Batch Planning', description: 'Schedule batch runs based on demand forecast and capacity.', order: 1, status: 'completed', subTasks: [], createdAt: '2025-01-15' },
+      { id: 'prod-s2', name: 'Raw Material Sourcing', description: 'Procure all required raw materials and packaging components.', order: 2, status: 'completed', subTasks: [], createdAt: '2025-01-15' },
+      { id: 'prod-s3', name: 'Pilot Run', description: 'Run a controlled pilot batch to validate production parameters.', order: 3, status: 'in-progress', subTasks: [], createdAt: '2025-01-15' },
+      { id: 'prod-s4', name: 'Quality Control', description: 'Conduct QC tests, sampling, and compliance checks on pilot output.', order: 4, status: 'not-started', subTasks: [], createdAt: '2025-01-15' },
+      { id: 'prod-s5', name: 'Full Production', description: 'Execute full-scale production run across designated plants.', order: 5, status: 'not-started', subTasks: [], createdAt: '2025-01-15' },
+      { id: 'prod-s6', name: 'Dispatch', description: 'Coordinate warehousing, inventory tagging, and distribution dispatch.', order: 6, status: 'not-started', subTasks: [], createdAt: '2025-01-15' },
+    ],
+  },
+];
+
 export function calculateLaunchReadiness(r: Brand['readiness']): number {
   return Math.round(r.compliance * 0.4 + r.production * 0.25 + r.distributor * 0.2 + r.marketing * 0.15);
 }

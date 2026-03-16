@@ -23,6 +23,8 @@ import Analytics from "@/pages/Analytics";
 import Documents from "@/pages/Documents";
 import Admin from "@/pages/Admin";
 import { ApprovalQueue } from "@/components/ApprovalQueue";
+import TeamProcess from "@/pages/TeamProcess";
+import AllTeamProcesses from "@/pages/AllTeamProcesses";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -59,6 +61,8 @@ const App = () => (
                 <Route path="/documents" element={<Documents />} />
                   <Route path="/admin" element={<Admin />} />
                   <Route path="/admin/approvals" element={<ApprovalQueue />} />
+                  <Route path="/my-process" element={<TeamProcess />} />
+                  <Route path="/team-processes" element={<AllTeamProcesses />} />
                 </Route>
                 <Route path="*" element={<NotFound />} />
               </Routes>

@@ -1,6 +1,7 @@
 import {
   LayoutDashboard, GitBranch, CircleDot, FlaskConical, Package, ShieldCheck,
   Factory, Truck, BarChart3, FileText, Settings, Megaphone, AlertTriangle, ClipboardCheck,
+  Workflow,
 } from 'lucide-react';
 import { NavLink } from '@/components/NavLink';
 import { useLocation } from 'react-router-dom';
@@ -25,14 +26,16 @@ const ALL_NAV_ITEMS = [
   { title: 'Documents', url: '/documents', icon: FileText },
   { title: 'Admin', url: '/admin', icon: Settings },
   { title: 'Approval Queue', url: '/admin/approvals', icon: ClipboardCheck },
+  { title: 'My Process', url: '/my-process', icon: Workflow },
+  { title: 'Team Processes', url: '/team-processes', icon: Workflow },
 ];
 
 const ROLE_ALLOWED_URLS: Record<Role, string[]> = {
-  admin: ALL_NAV_ITEMS.map((i) => i.url),
-  rd: ['/', '/pipeline', '/lifecycle', '/rd-blending', '/documents'],
-  packing: ['/', '/pipeline', '/packaging', '/documents'],
-  production: ['/', '/pipeline', '/lifecycle', '/compliance', '/production', '/distributors', '/documents'],
-  marketing: ['/', '/pipeline', '/lifecycle', '/marketing', '/analytics', '/documents'],
+  admin: ALL_NAV_ITEMS.map((i) => i.url).filter((url) => url !== '/my-process'),
+  rd: ['/', '/pipeline', '/lifecycle', '/rd-blending', '/documents', '/my-process'],
+  packing: ['/', '/pipeline', '/packaging', '/documents', '/my-process'],
+  production: ['/', '/pipeline', '/lifecycle', '/compliance', '/production', '/distributors', '/documents', '/my-process'],
+  marketing: ['/', '/pipeline', '/lifecycle', '/marketing', '/analytics', '/documents', '/my-process'],
 };
 
 const RELATED_SECTION_URLS = ['/rd-blending', '/packaging', '/compliance', '/production', '/marketing', '/distributors'];

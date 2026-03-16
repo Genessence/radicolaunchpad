@@ -2,9 +2,11 @@ import React, { createContext, useContext, useReducer, ReactNode } from 'react';
 import {
   Brand, BlendTrial, StateCompliance, ProductionBatch, Distributor,
   MarketingAsset, RiskAlert, ActivityItem, NextAction, StateOpportunity,
+  TeamProcess, TeamRole, TeamStage, TeamStageStatus,
   demoBrands, demoBlendTrials, demoStateCompliance, demoProductionBatches,
   demoDistributors, demoMarketingAssets, demoRiskAlerts, demoActivities,
-  demoNextActions, demoStateOpportunities, calculateLaunchReadiness,
+  demoNextActions, demoStateOpportunities, initialTeamProcesses,
+  calculateLaunchReadiness,
   StageGateKey,
 } from '@/data/mockData';
 
@@ -20,6 +22,7 @@ interface AppState {
   nextActions: NextAction[];
   stateOpportunities: StateOpportunity[];
   selectedBrandId: string | 'all';
+  teamProcesses: TeamProcess[];
 }
 
 type Action =
@@ -33,7 +36,12 @@ type Action =
   | { type: 'APPROVE_STAGE'; brandId: string; stageKey: StageGateKey; approvedBy: string }
   | { type: 'REJECT_STAGE'; brandId: string; stageKey: StageGateKey; comment: string }
   | { type: 'COMPLETE_SUB_TASK'; brandId: string; stageKey: StageGateKey; subTaskId: string }
-  | { type: 'UPDATE_STAGE_COST'; brandId: string; stageKey: StageGateKey; budget?: number; actualCost?: number };
+  | { type: 'UPDATE_STAGE_COST'; brandId: string; stageKey: StageGateKey; budget?: number; actualCost?: number }
+  | { type: 'CREATE_TEAM_STAGE'; teamRole: TeamRole; stage: Omit<TeamStage, 'id' | 'order' | 'createdAt'> }
+  | { type: 'UPDATE_TEAM_STAGE'; teamRole: TeamRole; stageId: string; name: string; description: string }
+  | { type: 'DELETE_TEAM_STAGE'; teamRole: TeamRole; stageId: string }
+  | { type: 'REORDER_TEAM_STAGES'; teamRole: TeamRole; stageIds: string[] }
+  | { type: 'UPDATE_TEAM_STAGE_STATUS'; teamRole: TeamRole; stageId: string; status: TeamStageStatus };
 
 const initialState: AppState = {
   brands: demoBrands,
@@ -47,6 +55,7 @@ const initialState: AppState = {
   nextActions: demoNextActions,
   stateOpportunities: demoStateOpportunities,
   selectedBrandId: 'all',
+  teamProcesses: initialTeamProcesses,
 };
 
 function reducer(state: AppState, action: Action): AppState {
@@ -284,6 +293,81 @@ function reducer(state: AppState, action: Action): AppState {
         };
       });
       return { ...state, brands: updatedBrands };
+    }
+
+    case 'CREATE_TEAM_STAGE': {
+      const today = new Date().toISOString().slice(0, 10);
+      return {
+        ...state,
+        teamProcesses: state.teamProcesses.map(tp => {
+          if (tp.teamRole !== action.teamRole) return tp;
+          const maxOrder = tp.stages.reduce((m, s) => Math.max(m, s.order), 0);
+          const newStage: TeamStage = {
+            ...action.stage,
+            id: `${action.teamRole}-s${Date.now()}`,
+            order: maxOrder + 1,
+            createdAt: today,
+          };
+          return { ...tp, stages: [...tp.stages, newStage] };
+        }),
+      };
+    }
+
+    case 'UPDATE_TEAM_STAGE': {
+      return {
+        ...state,
+        teamProcesses: state.teamProcesses.map(tp => {
+          if (tp.teamRole !== action.teamRole) return tp;
+          return {
+            ...tp,
+            stages: tp.stages.map(s =>
+              s.id === action.stageId ? { ...s, name: action.name, description: action.description } : s
+            ),
+          };
+        }),
+      };
+    }
+
+    case 'DELETE_TEAM_STAGE': {
+      return {
+        ...state,
+        teamProcesses: state.teamProcesses.map(tp => {
+          if (tp.teamRole !== action.teamRole) return tp;
+          const filtered = tp.stages.filter(s => s.id !== action.stageId);
+          return { ...tp, stages: filtered.map((s, i) => ({ ...s, order: i + 1 })) };
+        }),
+      };
+    }
+
+    case 'REORDER_TEAM_STAGES': {
+      return {
+        ...state,
+        teamProcesses: state.teamProcesses.map(tp => {
+          if (tp.teamRole !== action.teamRole) return tp;
+          const reordered = action.stageIds
+            .map((id, i) => {
+              const s = tp.stages.find(st => st.id === id);
+              return s ? { ...s, order: i + 1 } : null;
+            })
+            .filter(Boolean) as TeamStage[];
+          return { ...tp, stages: reordered };
+        }),
+      };
+    }
+
+    case 'UPDATE_TEAM_STAGE_STATUS': {
+      return {
+        ...state,
+        teamProcesses: state.teamProcesses.map(tp => {
+          if (tp.teamRole !== action.teamRole) return tp;
+          return {
+            ...tp,
+            stages: tp.stages.map(s =>
+              s.id === action.stageId ? { ...s, status: action.status } : s
+            ),
+          };
+        }),
+      };
     }
 
     default:
